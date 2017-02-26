@@ -43,7 +43,7 @@ public class Server {
 
         while (line != null && !line.trim().equals("")) {
         	String[] split_input = line.split(" ");
-        	inventory.put(split_input[0], Integer.parseInt(split_input[1]));
+        	inventory.put(split_input[0], (int) Double.parseDouble(split_input[1]));
             line = file.readLine();
         }
     } catch (Exception e) {
@@ -113,7 +113,7 @@ public class Server {
 			  String testId = line[0];
 			  if (testId.equals(inputId+"")) {
 				 current.remove(i);
-				 inventory.put(line[1], inventory.get(line[1]) + Integer.parseInt(line[2]));
+				 inventory.put(line[1], inventory.get(line[1]) + (int) Double.parseDouble(line[2]));
 				 return "Order " + inputId + " is canceled";
 			  }
 		  }
@@ -164,18 +164,18 @@ class ServerThread implements Runnable {
 	        	if (clientCommand == null || clientCommand.equals("null")) { break; }
 	        	String[] tokens = clientCommand.trim().split(" ");
 	        	
-	        	if (tokens[0].equals("setmode")) {
+	        	if (tokens[0].equals("setmode") && tokens.length == 2) {
 	            }
-	            else if (tokens[0].equals("purchase")) {
-	            	String response = Server.processPurchase(tokens[1], tokens[2], Integer.parseInt(tokens[3]));
+	            else if (tokens[0].equals("purchase") && tokens.length == 4) {
+	            	String response = Server.processPurchase(tokens[1], tokens[2], (int) Double.parseDouble(tokens[3]));
 	            	outToClient.writeBytes(response + "\n\n");
-	            } else if (tokens[0].equals("cancel")) {
-	            	String response = Server.processCancel(Integer.parseInt(tokens[1]));
+	            } else if (tokens[0].equals("cancel") && tokens.length == 2) {
+	            	String response = Server.processCancel((int) Double.parseDouble(tokens[1]));
 	            	outToClient.writeBytes(response + "\n\n");
-	            } else if (tokens[0].equals("search")) {
+	            } else if (tokens[0].equals("search") && tokens.length == 2) {
 	            	String response = Server.processSearch(tokens[1]);
 	            	outToClient.writeBytes(response + "\n\n");
-	            } else if (tokens[0].equals("list")) {
+	            } else if (tokens[0].equals("list") && tokens.length == 1) {
 	            	String response = Server.list();
 	            	outToClient.writeBytes(response + "\n");
 	            } else {
@@ -212,24 +212,24 @@ class UDPThread implements Runnable {
 	    		
 	        	String[] tokens = clientCommand.trim().split(" ");
 	        	
-	        	if (tokens[0].equals("setmode")) {
+	        	if (tokens[0].equals("setmode")  && tokens.length == 2) {
 	            }
-	            else if (tokens[0].equals("purchase")) {
-	            	String response = Server.processPurchase(tokens[1], tokens[2], Integer.parseInt(tokens[3])) + "\n\n";
+	            else if (tokens[0].equals("purchase")  && tokens.length == 4) {
+	            	String response = Server.processPurchase(tokens[1], tokens[2], (int) Double.parseDouble(tokens[3])) + "\n\n";
 	            	sendData = response.getBytes();
 					DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
 					udpSocket.send(sendPacket);
-	            } else if (tokens[0].equals("cancel")) {
-	            	String response = Server.processCancel(Integer.parseInt(tokens[1])) + "\n";
+	            } else if (tokens[0].equals("cancel")  && tokens.length == 2) {
+	            	String response = Server.processCancel((int) Double.parseDouble(tokens[1])) + "\n";
 	            	sendData = response.getBytes();
 					DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
 					udpSocket.send(sendPacket);
-	            } else if (tokens[0].equals("search")) {
+	            } else if (tokens[0].equals("search")  && tokens.length == 2) {
 	            	String response = Server.processSearch(tokens[1]) + "\n";
 	            	sendData = response.getBytes();
 					DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
 					udpSocket.send(sendPacket);
-	            } else if (tokens[0].equals("list")) {
+	            } else if (tokens[0].equals("list")  && tokens.length == 1) {
 	            	String response = Server.list();
 	            	sendData = response.getBytes();
 					DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
