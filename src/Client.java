@@ -52,7 +52,7 @@ public class Client {
         String[] tokens = cmd.split(" ");
 
         if (tokens[0].equals("setmode")) {
-        	if (tokens[1].equals("T")) {
+        	if (!tokens[1].equals("U")) {
           		tcpSocket = new Socket(hostAddress, tcpPort);
           		outToServer = new DataOutputStream(tcpSocket.getOutputStream());
           		inFromServer = new BufferedReader(new InputStreamReader(tcpSocket.getInputStream()));
