@@ -125,7 +125,7 @@ public class Server {
   public static synchronized String processSearch(String userName) {
 	  ArrayList<String> userHistory = orders.get(userName);
 	  if (userHistory == null || userHistory.size() == 0) {
-		  return "No order found for " + userName;
+		  return "No order found for " + userName + "\n";
 	  } else {
 		  StringBuilder orderhist = new StringBuilder();
 		  for (String line : userHistory) {
