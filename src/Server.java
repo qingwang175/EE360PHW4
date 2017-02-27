@@ -198,7 +198,7 @@ class ServerThread implements Runnable {
 	            	outToClient.writeBytes(response + "\n\n");
 	            } else if (tokens[0].equals("search") && tokens.length == 2) {
 	            	String response = Server.processSearch(tokens[1]);
-	            	outToClient.writeBytes(response + "\n\n");
+	            	outToClient.writeBytes(response + "\n");
 	            } else if (tokens[0].equals("list") && tokens.length == 1) {
 	            	String response = Server.list();
 	            	outToClient.writeBytes(response + "\n");
