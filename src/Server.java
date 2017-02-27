@@ -179,7 +179,7 @@ class ServerThread implements Runnable {
 	            	String response = Server.list();
 	            	outToClient.writeBytes(response + "\n");
 	            } else {
-	          	  System.out.println("ERROR: No such command");
+	          	  //System.out.println("ERROR: No such command");
 	          	  outToClient.writeBytes("ERROR: No such command\n\n");
 	            }
 	        	outToClient.flush();
@@ -216,7 +216,7 @@ class UDPThread implements Runnable {
 	        	if (tokens[0].equals("setmode")  && tokens.length == 2) {
 	            }
 	            else if (tokens[0].equals("purchase")  && tokens.length == 4) {
-	            	String response = Server.processPurchase(tokens[1], tokens[2], (int) Double.parseDouble(tokens[3])) + "\n\n";
+	            	String response = Server.processPurchase(tokens[1], tokens[2], (int) Double.parseDouble(tokens[3])) + "\n";
 	            	sendData = response.getBytes();
 					DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
 					udpSocket.send(sendPacket);
@@ -226,7 +226,7 @@ class UDPThread implements Runnable {
 					DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
 					udpSocket.send(sendPacket);
 	            } else if (tokens[0].equals("search")  && tokens.length == 2) {
-	            	String response = Server.processSearch(tokens[1]) + "\n";
+	            	String response = Server.processSearch(tokens[1]);
 	            	sendData = response.getBytes();
 					DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
 					udpSocket.send(sendPacket);
@@ -236,8 +236,10 @@ class UDPThread implements Runnable {
 					DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
 					udpSocket.send(sendPacket);
 	            } else {
-	          	  System.out.println("ERROR: No such command");
-	          	  //outToClient.writeBytes("ERROR: No such command\n\n");
+	          	  String response = "ERROR: No such command";
+	          	  sendData = response.getBytes();
+	          	  DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
+	          	  udpSocket.send(sendPacket);
 	            }
 	    	}
     	} catch (Exception e) {
