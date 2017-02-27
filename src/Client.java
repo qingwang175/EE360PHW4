@@ -83,7 +83,7 @@ public class Client {
         		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
         		udpSocket.receive(receivePacket);
         		String response = new String(receivePacket.getData());
-        		System.out.println(response);
+        		System.out.println(response.trim() + "\n");
         	}
 
         } else {
