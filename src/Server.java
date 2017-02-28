@@ -168,16 +168,16 @@ class ServerThread implements Runnable {
 	            }
 	            else if (tokens[0].equals("purchase") && tokens.length == 4) {
 	            	String response = Server.processPurchase(tokens[1], tokens[2], (int) Double.parseDouble(tokens[3]));
-	            	outToClient.writeBytes(response + "\n\n");
+	            	outToClient.writeBytes(response.trim() + "\n\n");
 	            } else if (tokens[0].equals("cancel") && tokens.length == 2) {
 	            	String response = Server.processCancel((int) Double.parseDouble(tokens[1]));
-	            	outToClient.writeBytes(response + "\n\n");
+	            	outToClient.writeBytes(response.trim() + "\n\n");
 	            } else if (tokens[0].equals("search") && tokens.length == 2) {
 	            	String response = Server.processSearch(tokens[1]);
-	            	outToClient.writeBytes(response + "\n");
+	            	outToClient.writeBytes(response.trim() + "\n\n");
 	            } else if (tokens[0].equals("list") && tokens.length == 1) {
 	            	String response = Server.list();
-	            	outToClient.writeBytes(response + "\n");
+	            	outToClient.writeBytes(response.trim() + "\n\n");
 	            } else {
 	          	  //System.out.println("ERROR: No such command");
 	          	  outToClient.writeBytes("ERROR: No such command\n\n");
