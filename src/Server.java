@@ -186,6 +186,12 @@ class ServerThread implements Runnable {
 	    	}
     	} catch (Exception e) {
     		e.printStackTrace();
+    	} finally {
+    		try {
+				mySocket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
     	}
 
     }
@@ -202,8 +208,8 @@ class UDPThread implements Runnable {
     public void run() {
     	try {
 	    	while(true) {
-				byte[] receiveData = new byte[1024];
-				byte[] sendData = new byte[1024];
+				byte[] receiveData = new byte[65000];
+				byte[] sendData = new byte[65000];
 	    		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 				udpSocket.receive(receivePacket);
 				
