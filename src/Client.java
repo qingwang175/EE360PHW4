@@ -90,40 +90,7 @@ public class Client {
         	System.out.println("ERROR: No such command");
         }
     
-    }
-    /*
-    while(sc.hasNextLine()) {
-      String cmd = sc.nextLine();
-      String[] tokens = cmd.split(" ");
-      if (clientSocket != null) {
-    	  outToServer = new DataOutputStream(clientSocket.getOutputStream());
-      }
-      
-      if (tokens[0].equals("setmode")) {
-    	  clientSocket = new Socket("localhost", 6789);
-    	  outToServer = new DataOutputStream(clientSocket.getOutputStream());
-    	  System.out.println("Connected to server using TCP");
-    	  //outToServer.writeBytes(sentence + '\n');
-      }
-      else if (tokens[0].equals("purchase")) {
-        // TODO: send appropriate command to the server and display the
-        // appropriate responses form the server
-      } else if (tokens[0].equals("cancel")) {
-        // TODO: send appropriate command to the server and display the
-        // appropriate responses form the server
-      } else if (tokens[0].equals("search")) {
-        // TODO: send appropriate command to the server and display the
-        // appropriate responses form the server
-      } else if (tokens[0].equals("list")) {
-        // TODO: send appropriate command to the server and display the
-        // appropriate responses form the server
-      } else {
-    	  outToServer.writeBytes(cmd + '\n');
-    	  System.out.println("ERROR: No such command");
-      }
-    }
-    */
-    
+    }    
     
   }
 }
