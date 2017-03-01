@@ -37,7 +37,7 @@ public class Client {
     
     //UDP Config
     DatagramSocket udpSocket = null;
-	byte[] sendData = new byte[65000];
+	byte[] sendData = new byte[1024];
 	byte[] receiveData = new byte[65000];
     
     Scanner sc = new Scanner(System.in);
@@ -45,7 +45,7 @@ public class Client {
     while(sc.hasNextLine()) {
     	if (!mode) {
         	sendData = new byte[1024];
-        	receiveData = new byte[1024];
+        	receiveData = new byte[65000];
     	}
         
     	String cmd = sc.nextLine();
