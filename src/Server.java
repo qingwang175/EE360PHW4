@@ -68,7 +68,7 @@ public class Server {
         System.exit(-1);
     }
     
-    UDPThread ut = new UDPThread(udpSocket);
+    UDPThread ut = new UDPThread(udpSocket, threadPool);
     threadPool.submit(ut);
     
     // Get incoming connection and create thread
@@ -200,54 +200,81 @@ class ServerThread implements Runnable {
 
 class UDPThread implements Runnable {
 	DatagramSocket udpSocket;
+	ExecutorService threadPool;
 	
-	public UDPThread(DatagramSocket ds) {
+	public UDPThread(DatagramSocket ds, ExecutorService threadPool) {
 		udpSocket = ds;
+		this.threadPool = threadPool;
 	}
 	
     public void run() {
     	try {
 	    	while(true) {
 				byte[] receiveData = new byte[1024];
-				byte[] sendData = new byte[65000];
 	    		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 				udpSocket.receive(receivePacket);
 				
 				InetAddress IPAddress = receivePacket.getAddress();
 				int port = receivePacket.getPort();
 				String clientCommand = new String( receivePacket.getData());
-	    		
-	        	String[] tokens = clientCommand.trim().split(" ");
-	        	
-	        	if (tokens[0].equals("setmode")  && tokens.length == 2) {
-	            }
-	            else if (tokens[0].equals("purchase")  && tokens.length == 4) {
-	            	String response = Server.processPurchase(tokens[1], tokens[2], (int) Double.parseDouble(tokens[3])) + "\n";
-	            	sendData = response.getBytes();
-					DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-					udpSocket.send(sendPacket);
-	            } else if (tokens[0].equals("cancel")  && tokens.length == 2) {
-	            	String response = Server.processCancel((int) Double.parseDouble(tokens[1])) + "\n";
-	            	sendData = response.getBytes();
-					DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-					udpSocket.send(sendPacket);
-	            } else if (tokens[0].equals("search")  && tokens.length == 2) {
-	            	String response = Server.processSearch(tokens[1]);
-	            	sendData = response.getBytes();
-					DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-					udpSocket.send(sendPacket);
-	            } else if (tokens[0].equals("list")  && tokens.length == 1) {
-	            	String response = Server.list();
-	            	sendData = response.getBytes();
-					DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-					udpSocket.send(sendPacket);
-	            } else {
-	          	  String response = "ERROR: No such command";
-	          	  sendData = response.getBytes();
-	          	  DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-	          	  udpSocket.send(sendPacket);
-	            }
+				UDPCommandThread anotherOne = new UDPCommandThread(udpSocket,clientCommand,IPAddress,port);
+				threadPool.submit(anotherOne);
 	    	}
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
+
+    }
+}
+
+
+class UDPCommandThread implements Runnable {
+	DatagramSocket udpSocket;
+	String clientCommand;
+	InetAddress IPAddress;
+	int port;
+	
+	public UDPCommandThread(DatagramSocket ds, String command, InetAddress ip, int p) {
+		udpSocket = ds;
+		clientCommand = command;
+		IPAddress = ip;
+		port = p;
+		System.out.println("anotherone");
+	}
+	
+    public void run() {
+    	try {
+    		byte[] sendData = new byte[65000];
+        	String[] tokens = clientCommand.trim().split(" ");
+        	
+        	if (tokens[0].equals("setmode")  && tokens.length == 2) {
+            }
+            else if (tokens[0].equals("purchase")  && tokens.length == 4) {
+            	String response = Server.processPurchase(tokens[1], tokens[2], (int) Double.parseDouble(tokens[3])) + "\n";
+            	sendData = response.getBytes();
+				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
+				udpSocket.send(sendPacket);
+            } else if (tokens[0].equals("cancel")  && tokens.length == 2) {
+            	String response = Server.processCancel((int) Double.parseDouble(tokens[1])) + "\n";
+            	sendData = response.getBytes();
+				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
+				udpSocket.send(sendPacket);
+            } else if (tokens[0].equals("search")  && tokens.length == 2) {
+            	String response = Server.processSearch(tokens[1]);
+            	sendData = response.getBytes();
+				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
+				udpSocket.send(sendPacket);
+            } else if (tokens[0].equals("list")  && tokens.length == 1) {
+            	String response = Server.list();
+            	sendData = response.getBytes();
+				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
+				udpSocket.send(sendPacket);
+            } else {
+          	  String response = "ERROR: No such command";
+          	  sendData = response.getBytes();
+          	  DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
+          	  udpSocket.send(sendPacket);
+            }
     	} catch (Exception e) {
     		e.printStackTrace();
     	}
