@@ -239,7 +239,6 @@ class UDPCommandThread implements Runnable {
 		clientCommand = command;
 		IPAddress = ip;
 		port = p;
-		System.out.println("anotherone");
 	}
 	
     public void run() {
