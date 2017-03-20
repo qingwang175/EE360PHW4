@@ -3,42 +3,53 @@ import java.io.DataOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
+//import java.net.DatagramPacket;
+//import java.net.DatagramSocket;
+//import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
+//import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.Queue;
+import java.util.LinkedList;
 
 public class Server {
 	
   static Map<String,Integer> inventory = new HashMap<String,Integer>(); // <productname, quantity>
   static Map<String,ArrayList<String>> orders = new HashMap<String,ArrayList<String>>(); // <username, orderid productname quantity...>
   static int orderId = 1;
+  Queue<Integer> commandQ = new LinkedList<Integer> ();
   
   public static void main (String[] args) throws IOException {
-    int tcpPort;
-    int udpPort;
-    if (args.length != 3) {
-      System.out.println("ERROR: Provide 3 arguments");
-      System.out.println("\t(1) <tcpPort>: the port number for TCP connection");
-      System.out.println("\t(2) <udpPort>: the port number for UDP connection");
-      System.out.println("\t(3) <file>: the file of inventory");
+	  
+	Scanner sc = new Scanner(System.in);
+	int myID = sc.nextInt();
+	int numServer = sc.nextInt();
+	String inventoryPath = sc.next();
+	ArrayList<String> IPList = new ArrayList<String> ();
+	ArrayList<Integer> portList = new ArrayList<Integer> ();
+	
 
-      System.exit(-1);
+    for (int i = 0; i < numServer; i++) {
+        //parses inputs to get the ips and ports of servers
+        String str = sc.next();
+        String[] strSplit = str.trim().split(":");
+        IPList.add(strSplit[0]);
+        portList.add(Integer.parseInt(strSplit[1]));
+        System.out.println("address for server " + i + ": " + str);
     }
     
-    tcpPort = Integer.parseInt(args[0]);
-    udpPort = Integer.parseInt(args[1]);
-    String fileName = args[2];
-
+    sc.close();
+    
+    int tcpPort = portList.get(myID - 1);
+    
     // Parse the inventory file
-    try(BufferedReader file = new BufferedReader(new FileReader(fileName))) {
+    try(BufferedReader file = new BufferedReader(new FileReader(inventoryPath))) {
         String line = file.readLine();
 
         while (line != null && !line.trim().equals("")) {
@@ -56,9 +67,6 @@ public class Server {
     ServerSocket tcpSocket = new ServerSocket(tcpPort);
     Socket connectionSocket;
     
-    // UDP
-	DatagramSocket udpSocket = new DatagramSocket(udpPort);
-    
     // ThreadPool
     ExecutorService threadPool = null;
     try {
@@ -67,9 +75,6 @@ public class Server {
         System.err.println(e); 
         System.exit(-1);
     }
-    
-    UDPThread ut = new UDPThread(udpSocket, threadPool);
-    threadPool.submit(ut);
     
     // Get incoming connection and create thread
     while(true) {
@@ -81,8 +86,7 @@ public class Server {
     
   }
   
-  
-  public static synchronized String processPurchase(String userName,String productName, int quantity) {
+  public static String processPurchase(String userName,String productName, int quantity) {
 	  Integer pQuantity = inventory.get(productName);
 	  if (pQuantity == null) {
 		  return "Not Available - We do not sell this product";
@@ -103,8 +107,8 @@ public class Server {
 	  }
 	  return "Your order has been placed, " + currentId + " " + userName + " " + productName + " " + quantity ;
   }
-  
-  public static synchronized String processCancel(int inputId) {
+
+  public static String processCancel(int inputId) {
 	  for (Map.Entry<String, ArrayList<String>> allOrders : orders.entrySet()) {
 		  
 		  ArrayList<String> current = allOrders.getValue();
@@ -122,7 +126,7 @@ public class Server {
 	  return inputId + " not found, no such order";
   }
   
-  public static synchronized String processSearch(String userName) {
+  public static String processSearch(String userName) {
 	  ArrayList<String> userHistory = orders.get(userName);
 	  if (userHistory == null || userHistory.size() == 0) {
 		  return "No order found for " + userName + "\n";
@@ -136,12 +140,24 @@ public class Server {
 	  }
   }
   
-  public static synchronized String list() {
+  public static String list() {
 	  StringBuilder inventoryList = new StringBuilder();
 	  for (Map.Entry<String, Integer> item : inventory.entrySet()) {
 		  inventoryList.append(item.getKey() + " " + item.getValue() + "\n");
 	  }
 	  return inventoryList.toString();
+  }
+  
+  //Can't make these methods static
+  
+  //TODO: Add to commandQ
+  public synchronized void addToList(int threadHash) {
+	  return;
+  }
+  
+  //TODO: Check if thread is next in local commandQ
+  public synchronized boolean isNext() {
+	  return true;
   }
 }
 
@@ -158,32 +174,53 @@ class ServerThread implements Runnable {
 	}
 	
     public void run() {
-    	try {
-	    	while(true) {
-	        	String clientCommand = inFromClient.readLine();
-	        	if (clientCommand == null || clientCommand.equals("null")) { break; }
-	        	String[] tokens = clientCommand.trim().split(" ");
-	        	
-	        	if (tokens[0].equals("setmode") && tokens.length == 2) {
-	            }
-	            else if (tokens[0].equals("purchase") && tokens.length == 4) {
-	            	String response = Server.processPurchase(tokens[1], tokens[2], (int) Double.parseDouble(tokens[3]));
-	            	outToClient.writeBytes(response.trim() + "\n\n");
-	            } else if (tokens[0].equals("cancel") && tokens.length == 2) {
-	            	String response = Server.processCancel((int) Double.parseDouble(tokens[1]));
-	            	outToClient.writeBytes(response.trim() + "\n\n");
-	            } else if (tokens[0].equals("search") && tokens.length == 2) {
-	            	String response = Server.processSearch(tokens[1]);
-	            	outToClient.writeBytes(response.trim() + "\n\n");
-	            } else if (tokens[0].equals("list") && tokens.length == 1) {
-	            	String response = Server.list();
-	            	outToClient.writeBytes(response.trim() + "\n\n");
-	            } else {
-	          	  //System.out.println("ERROR: No such command");
-	          	  outToClient.writeBytes("ERROR: No such command\n\n");
-	            }
-	        	outToClient.flush();
+	    while(true) {
+	    	//Synchronized add to queue
+	    	//if(begin of queue)
+	    	try {
+		        String clientCommand = inFromClient.readLine();
+		        if (!(clientCommand == null || clientCommand.equals("null"))) {
+		        	//add to List
+		        }
+		        //Here, also ask for conditions using Lamport's
+		        //if(isNext()) {
+		        	//singleRun(String command);
+		        //}
+		    } catch (Exception e) {
+	    		e.printStackTrace();
+	    	} finally {
+	    		try {
+					mySocket.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 	    	}
+	    }
+
+    }
+    
+    //Change this so it doesn't act until acks received
+    private synchronized void singleRun(String command) {
+    	try {
+	        String[] tokens = command.trim().split(" ");
+	        
+	        if (tokens[0].equals("purchase") && tokens.length == 4) {
+	            String response = Server.processPurchase(tokens[1], tokens[2], (int) Double.parseDouble(tokens[3]));
+	            outToClient.writeBytes(response.trim() + "\n\n");
+	        } else if (tokens[0].equals("cancel") && tokens.length == 2) {
+	            String response = Server.processCancel((int) Double.parseDouble(tokens[1]));
+	            outToClient.writeBytes(response.trim() + "\n\n");
+	        } else if (tokens[0].equals("search") && tokens.length == 2) {
+	            String response = Server.processSearch(tokens[1]);
+	            outToClient.writeBytes(response.trim() + "\n\n");
+	        } else if (tokens[0].equals("list") && tokens.length == 1) {
+	            String response = Server.list();
+	            outToClient.writeBytes(response.trim() + "\n\n");
+	        } else {
+	        	//System.out.println("ERROR: No such command");
+	          	outToClient.writeBytes("ERROR: No such command\n\n");
+	        }
+	        outToClient.flush();
     	} catch (Exception e) {
     		e.printStackTrace();
     	} finally {
@@ -193,90 +230,7 @@ class ServerThread implements Runnable {
 				e.printStackTrace();
 			}
     	}
-
     }
 }
 
 
-class UDPThread implements Runnable {
-	DatagramSocket udpSocket;
-	ExecutorService threadPool;
-	
-	public UDPThread(DatagramSocket ds, ExecutorService threadPool) {
-		udpSocket = ds;
-		this.threadPool = threadPool;
-	}
-	
-    public void run() {
-    	try {
-	    	while(true) {
-				byte[] receiveData = new byte[1024];
-	    		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-				udpSocket.receive(receivePacket);
-				
-				InetAddress IPAddress = receivePacket.getAddress();
-				int port = receivePacket.getPort();
-				String clientCommand = new String( receivePacket.getData());
-				UDPCommandThread anotherOne = new UDPCommandThread(udpSocket,clientCommand,IPAddress,port);
-				threadPool.submit(anotherOne);
-	    	}
-    	} catch (Exception e) {
-    		e.printStackTrace();
-    	}
-
-    }
-}
-
-
-class UDPCommandThread implements Runnable {
-	DatagramSocket udpSocket;
-	String clientCommand;
-	InetAddress IPAddress;
-	int port;
-	
-	public UDPCommandThread(DatagramSocket ds, String command, InetAddress ip, int p) {
-		udpSocket = ds;
-		clientCommand = command;
-		IPAddress = ip;
-		port = p;
-	}
-	
-    public void run() {
-    	try {
-    		byte[] sendData = new byte[65000];
-        	String[] tokens = clientCommand.trim().split(" ");
-        	
-        	if (tokens[0].equals("setmode")  && tokens.length == 2) {
-            }
-            else if (tokens[0].equals("purchase")  && tokens.length == 4) {
-            	String response = Server.processPurchase(tokens[1], tokens[2], (int) Double.parseDouble(tokens[3])) + "\n";
-            	sendData = response.getBytes();
-				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-				udpSocket.send(sendPacket);
-            } else if (tokens[0].equals("cancel")  && tokens.length == 2) {
-            	String response = Server.processCancel((int) Double.parseDouble(tokens[1])) + "\n";
-            	sendData = response.getBytes();
-				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-				udpSocket.send(sendPacket);
-            } else if (tokens[0].equals("search")  && tokens.length == 2) {
-            	String response = Server.processSearch(tokens[1]);
-            	sendData = response.getBytes();
-				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-				udpSocket.send(sendPacket);
-            } else if (tokens[0].equals("list")  && tokens.length == 1) {
-            	String response = Server.list();
-            	sendData = response.getBytes();
-				DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-				udpSocket.send(sendPacket);
-            } else {
-          	  String response = "ERROR: No such command";
-          	  sendData = response.getBytes();
-          	  DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-          	  udpSocket.send(sendPacket);
-            }
-    	} catch (Exception e) {
-    		e.printStackTrace();
-    	}
-
-    }
-}
